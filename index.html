@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MYRA — Golden Neural Orb</title>
+<style>
+  :root{
+    --bg:#050509;
+    --accent-1: #ffd26a; /* pale gold */
+    --accent-2: #ffb300; /* bright gold */
+    --accent-3: #ff8c00; /* deep amber */
+    --glass: rgba(255,255,255,0.06);
+  }
+
+  html,body{
+    height:100%;
+    margin:0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(255,180,80,0.03), transparent),
+                radial-gradient(900px 400px at 85% 85%, rgba(255,140,0,0.02), transparent),
+                var(--bg);
+    color: #fff;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  .stage{
+    position:relative;
+    height:100vh;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    gap:28px;
+  }
+
+  /* Canvas wrapper for nice center layout */
+  .orb-wrap{
+    position:relative;
+    width:520px;
+    height:520px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+    border-radius:50%;
+    filter: drop-shadow(0 18px 60px rgba(255,164,46,0.06));
+  }
+
+  /* center glass lens */
+  .lens {
+    position:relative;
+    z-index:20;
+    width:220px;
+    height:220px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: radial-gradient(circle at 35% 30%,
+                rgba(255,255,255,0.08),
+                rgba(255,220,120,0.03) 20%,
+                transparent 55%),
+                linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.06));
+    box-shadow:
+      0 0 90px 18px rgba(255,170,20,0.06),
+      inset 0 6px 30px rgba(255,210,120,0.04);
+    border: 1px solid rgba(255,210,120,0.07);
+    backdrop-filter: blur(6px) saturate(120%);
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+  }
+
+  .lens .core{
+    width:105px;
+    height:105px;
+    border-radius:50%;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.25) 6%, rgba(255,200,80,0.08) 14%, transparent 30%),
+      radial-gradient(circle at 65% 70%, rgba(255,200,80,0.10), rgba(255,120,10,0.08) 20%, transparent 45%),
+      linear-gradient(180deg, rgba(255,215,120,0.12), rgba(255,160,30,0.07));
+    box-shadow:
+      0 0 28px 10px rgba(255,160,20,0.08),
+      0 8px 40px rgba(255,150,10,0.06),
+      inset 0 -6px 16px rgba(0,0,0,0.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    color:#111;
+    letter-spacing:1px;
+  }
+
+  /* activation UI */
+  .controls{
+    width:320px;
+    color: #ddd;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    z-index:40;
+    user-select:none;
+  }
+
+  .title{
+    font-size:20px;
+    font-weight:700;
+    color:var(--accent-1);
+    text-shadow: 0 6px 24px rgba(255,160,50,0.05);
+  }
+
+  .subtitle{
+    color:#a9a3a3;
+    font-size:13px;
+  }
+
+  .btn-row{
+    display:flex;
+    gap:10px;
+    margin-top:6px;
+  }
+
+  .btn{
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,200,80,0.08);
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    font-weight:600;
+    color:var(--accent-1);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 6px 22px rgba(0,0,0,0.45);
+  }
+
+  .btn:active { transform:translateY(1px) scale(0.997); }
+
+  .mic {
+    width:44px;
+    height:44px;
+    border-radius:10px;
+    display:inline-grid;
+    place-items:center;
+    font-weight:700;
+  }
+
+  .status {
+    margin-top:10px;
+    font-size:13px;
+    color:#bfb5b0;
+  }
+
+  /* small footer hint */
+  .hint{
+    position:absolute;
+    bottom:20px;
+    left:20px;
+    font-size:12px;
+    color:#8e8b8b;
+  }
+
+  /* pulse on active */
+  .lens.active{
+    transform: scale(1.06) rotate(-2deg);
+    box-shadow:
+      0 0 160px 36px rgba(255,170,20,0.12),
+      inset 0 12px 40px rgba(255,220,120,0.06);
+  }
+
+  /* responsive */
+  @media (max-width:900px){
+    .stage{
+      gap:18px;
+      padding:28px;
+      flex-direction:column;
+    }
+    .orb-wrap{ width:420px; height:420px; }
+    .controls{ width:100%; max-width:420px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="orb-wrap" aria-hidden="true">
+      <canvas id="lines"></canvas>
+      <canvas id="glow"></canvas>
+      <div class="lens" id="lens" title="Click to activate/pulse">
+        <div class="core" id="core-text">MYRA</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="title">MYRA — Neural Orb</div>
+      <div class="subtitle">Golden neural visualization · Jarvis-style activation</div>
+
+      <div class="btn-row">
+        <button class="btn" id="pulseBtn">Pulse</button>
+        <button class="btn mic" id="micBtn" title="Toggle voice greeting">🎙</button>
+        <button class="btn" id="autoplayBtn" title="Auto pulse">Auto</button>
+      </div>
+
+      <div class="status" id="status">Idle — Click the orb or press <kbd>Space</kbd>.</div>
+    </div>
+
+    <div class="hint">Tip: click orb to pulse • Space triggers pulse • Mic uses browser speech synth (local)</div>
+  </div>
+
+<script>
+/*
+  MYRA Golden Neural Orb
+  - canvas #lines draws nodes and connecting neural lines
+  - canvas #glow draws layered radial blur/gradient glow
+  - interactive pulse and activation
+*/
+
+const linesCanvas = document.getElementById('lines');
+const glowCanvas  = document.getElementById('glow');
+const lens = document.getElementById('lens');
+const coreText = document.getElementById('core-text');
+const status = document.getElementById('status');
+const pulseBtn = document.getElementById('pulseBtn');
+const micBtn = document.getElementById('micBtn');
+const autoplayBtn = document.getElementById('autoplayBtn');
+
+let W=0,H=0;
+function sizeCanvases(){
+  const rect = linesCanvas.getBoundingClientRect();
+  W = Math.max(1, Math.floor(rect.width));
+  H = Math.max(1, Math.floor(rect.height));
+  [linesCanvas, glowCanvas].forEach(c=>{
+    c.width = W * devicePixelRatio;
+    c.height = H * devicePixelRatio;
+    c.style.width = W + 'px';
+    c.style.height = H + 'px';
+    const ctx = c.getContext('2d');
+    ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  });
+}
+sizeCanvases();
+window.addEventListener('resize', ()=>{
+  sizeCanvases();
+  initNodes();
+});
+
+const linesCtx = linesCanvas.getContext('2d');
+const glowCtx  = glowCanvas.getContext('2d');
+
+/* nodes that orbit near the orb center */
+let nodes = [];
+const NODE_COUNT = 45;
+const ORB_R = Math.min(200, Math.min(W,H)/2.3); // approximate radius in px
+function rand(a,b){ return a + Math.random() * (b - a); }
+
+function initNodes(){
+  nodes = [];
+  const cx = W/2, cy = H/2;
+  for(let i=0;i<NODE_COUNT;i++){
+    const angle = Math.random() * Math.PI * 2;
+    const dist = rand(ORB_R*0.45, ORB_R*0.95);
+    nodes.push({
+      x: cx + Math.cos(angle) * dist,
+      y: cy + Math.sin(angle) * dist,
+      vx: rand(-0.2,0.2),
+      vy: rand(-0.2,0.2),
+      baseDist: dist,
+      angle: angle,
+      speed: rand(0.002, 0.007),
+      size: rand(1.6,3.6),
+      phase: Math.random()*Math.PI*2
+    });
+  }
+}
+initNodes();
+
+/* draw glow canvas */
+function drawGlow(t){
+  glowCtx.clearRect(0,0,W,H);
+  const cx = W/2, cy = H/2;
+
+  // outer shimmer radial
+  const g1 = glowCtx.createRadialGradient(cx,cy,20,cx,cy,ORB_R*1.4);
+  g1.addColorStop(0, 'rgba(255,200,100,0.08)');
+  g1.addColorStop(0.35, 'rgba(255,160,50,0.06)');
+  g1.addColorStop(0.6, 'rgba(255,120,15,0.03)');
+  g1.addColorStop(1, 'rgba(0,0,0,0)');
+  glowCtx.fillStyle = g1;
+  glowCtx.beginPath();
+  glowCtx.arc(cx,cy,ORB_R*1.4,0,Math.PI*2);
+  glowCtx.fill();
+
+  // moving streaks (simulate neural flow)
+  const lines = 8;
+  for(let i=0;i<lines;i++){
+    const ang = t*0.0007 + i * (Math.PI*2/lines);
+    glowCtx.save();
+    glowCtx.globalCompositeOperation = 'lighter';
+    glowCtx.translate(cx,cy);
+    glowCtx.rotate(ang);
+    const grad = glowCtx.createLinearGradient(-ORB_R*1.2,0,ORB_R*1.2,0);
+    grad.addColorStop(0, 'rgba(255,200,120,0.02)');
+    grad.addColorStop(0.5, 'rgba(255,200,120,0.06)');
+    grad.addColorStop(1, 'rgba(255,120,30,0.01)');
+    glowCtx.fillStyle = grad;
+    glowCtx.beginPath();
+    glowCtx.ellipse(0, -ORB_R*0.18, ORB_R*1.0, ORB_R*0.14, Math.sin(t*0.0008+i)*0.3, 0, Math.PI*2);
+    glowCtx.fill();
+    glowCtx.restore();
+  }
+}
+
+/* draw neural nodes + connecting lines */
+function drawLines(t){
+  linesCtx.clearRect(0,0,W,H);
+  linesCtx.lineWidth = 1;
+  linesCtx.lineCap = 'round';
+  const cx = W/2, cy = H/2;
+
+  // motion update
+  nodes.forEach((n, i)=>{
+    // orbital wobble
+    n.angle += n.speed * (0.6 + 0.8 * Math.sin(n.phase + t*0.0006));
+    const wobble = Math.sin(t*0.0012 + n.phase) * 8;
+    const dist = n.baseDist + wobble;
+    n.x = cx + Math.cos(n.angle) * dist + Math.sin(t*0.0009 + n.phase)*6;
+    n.y = cy + Math.sin(n.angle) * dist + Math.cos(t*0.0007 + n.phase)*6;
+  });
+
+  // draw connections
+  for(let i=0;i<nodes.length;i++){
+    const a = nodes[i];
+    for(let j=i+1;j<nodes.length;j++){
+      const b = nodes[j];
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      const d = Math.sqrt(dx*dx+dy*dy);
+      if(d < 120){
+        const alpha = 0.26 * (1 - d/120);
+        linesCtx.strokeStyle = `rgba(255,195,90,${alpha})`;
+        linesCtx.beginPath();
+        // slightly curved bezier for organic neural look
+        const mx = (a.x + b.x)/2 + Math.sin((a.x+b.x + t*0.001)/80) * 18;
+        const my = (a.y + b.y)/2 + Math.cos((a.y+b.y + t*0.001)/80) * 10;
+        linesCtx.moveTo(a.x,a.y);
+        linesCtx.quadraticCurveTo(mx,my,b.x,b.y);
+        linesCtx.stroke();
+      }
+    }
+  }
+
+  // draw nodes as soft blips
+  nodes.forEach(n=>{
+    const rad = n.size;
+    const grd = linesCtx.createRadialGradient(n.x, n.y, 0, n.x, n.y, rad*4);
+    grd.addColorStop(0, 'rgba(255,240,200,0.95)');
+    grd.addColorStop(0.18, 'rgba(255,210,120,0.70)');
+    grd.addColorStop(0.45, 'rgba(255,160,45,0.24)');
+    grd.addColorStop(1, 'rgba(255,140,30,0.01)');
+    linesCtx.fillStyle = grd;
+    linesCtx.beginPath();
+    linesCtx.arc(n.x,n.y, rad, 0, Math.PI*2);
+    linesCtx.fill();
+  });
+
+  // gentle halo around center to tie visuals
+  const halo = linesCtx.createRadialGradient(cx,cy,0,cx,cy,ORB_R*0.85);
+  halo.addColorStop(0, 'rgba(255,210,100,0.06)');
+  halo.addColorStop(0.5, 'rgba(255,160,40,0.03)');
+  halo.addColorStop(1, 'rgba(0,0,0,0)');
+  linesCtx.fillStyle = halo;
+  linesCtx.beginPath();
+  linesCtx.arc(cx,cy, ORB_R*0.85, 0, Math.PI*2);
+  linesCtx.fill();
+}
+
+/* pulse animation: expands nodes and brightens */
+let pulseProgress = 0;
+let pulsing = false;
+function triggerPulse(){
+  pulsing = true;
+  pulseProgress = 0;
+  lens.classList.add('active');
+  status.textContent = 'Activated — Pulse triggered';
+  coreText.textContent = 'LISTEN';
+  setTimeout(()=> coreText.textContent = 'MYRA', 1200);
+  setTimeout(()=> lens.classList.remove('active'), 900);
+  // small ripple: push nodes outward slightly
+  nodes.forEach((n, i)=>{
+    n.baseDist *= 1.02 + Math.random()*0.06;
+  });
+}
+
+/* autoplay toggle */
+let autoPulse = false;
+autoplayBtn.addEventListener('click', ()=>{
+  autoPulse = !autoPulse;
+  autoplayBtn.style.opacity = autoPulse ? '1' : '0.9';
+  autoplayBtn.textContent = autoPulse ? 'Auto: ON' : 'Auto';
+});
+
+/* microphone voice greeting using Web Speech API (local only) */
+let micActive = false;
+micBtn.addEventListener('click', ()=>{
+  micActive = !micActive;
+  micBtn.style.filter = micActive ? 'drop-shadow(0 8px 24px rgba(255,160,40,0.2))' : 'none';
+  if(micActive){
+    speakLocal("Can I have the code of activation!");
+  } else {
+    speakLocal("Microphone off.");
+  }
+});
+
+function speakLocal(t){
+  if(!("speechSynthesis" in window)) return;
+  const u = new SpeechSynthesisUtterance(t);
+  u.lang = 'en-US';
+  u.rate = 1;
+  u.pitch = 1.05;
+  u.volume = 1;
+  // choose a warmer voice if available
+  const voices = speechSynthesis.getVoices();
+  if(voices && voices.length){
+    // pick a neutral/en-US/UK voice if present
+    const prefer = voices.find(v => /en-?us|en-?gb|google/i.test(v.name)) || voices[0];
+    if(prefer) u.voice = prefer;
+  }
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+/* basic animation loop */
+let last = performance.now();
+function animate(t){
+  const dt = t - last;
+  last = t;
+
+  drawGlow(t);
+  drawLines(t);
+
+  // pulse timing visual bump
+  if(pulsing){
+    pulseProgress += dt * 0.003; // speed
+    if(pulseProgress > 1.0){ pulsing = false; pulseProgress = 0; }
+    const p = Math.sin(pulseProgress * Math.PI) * 0.9;
+    // temporarily brighten nodes by multiplying their size
+    nodes.forEach(n=>{
+      // subtle scale mod per node
+      n.displaySize = n.size * (1 + p * 0.9);
+    });
+  } else {
+    nodes.forEach(n=> n.displaySize = n.size);
+  }
+
+  // auto pulse occasionally
+  if(autoPulse && Math.random() < 0.006) triggerPulse();
+
+  requestAnimationFrame(animate);
+}
+
+/* user interactions */
+lens.addEventListener('click', ()=>{
+  triggerPulse();
+});
+pulseBtn.addEventListener('click', ()=> triggerPulse());
+window.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space'){ e.preventDefault(); triggerPulse(); }
+});
+
+/* small hover feedback */
+lens.addEventListener('mouseenter', ()=> lens.style.transform = 'scale(1.02)');
+lens.addEventListener('mouseleave', ()=> lens.style.transform = '');
+
+initNodes();
+requestAnimationFrame(animate);
+
+/* Extra: gentle startup sequence */
+setTimeout(()=> {
+  status.textContent = 'Boot sequence complete — Ready';
+  // quick intro flicker
+  lens.classList.add('active');
+  setTimeout(()=> lens.classList.remove('active'), 800);
+}, 450);
+
+/* Performance safety: throttle when tab not visible */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    // pause voices and reduce animation frequency by canceling frames
+    if('speechSynthesis' in window) speechSynthesis.cancel();
+    // stop heavy updates by replacing animate with an idle no-op (not necessary here)
+  }
+});
+</script>
+</body>
+</html>
