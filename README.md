@@ -1,12 +1,12 @@
-MYRA — Multimodal Yielding Responsive Assistant
+**MYRA — Multimodal Yielding Responsive Assistant**
 
 MYRA is a Jarvis-inspired personal AI assistant that combines a Python-based intelligence engine with a lightweight web-based visual interface.
 The project focuses on modular design, voice interaction, and a futuristic neural-style visualization.
 
 MYRA is designed as a foundation for building more advanced, autonomous assistant systems.
 
-Features
-Backend (Python)
+**Features**
+**Backend (Python)**
 
 Voice recognition and command processing
 
@@ -22,7 +22,7 @@ Modular command execution architecture
 
 Wake-word based activation
 
-Frontend (Web Interface)
+**Frontend (Web Interface)**
 
 Neural-style animated visualization
 
@@ -32,7 +32,7 @@ Clean HTML, CSS, and JavaScript
 
 Runs directly in the browser without frameworks
 
-Project Structure
+**Project Structure**
 MYRA/
 │
 ├── main.py                 # Main assistant loop
@@ -53,13 +53,13 @@ MYRA/
 │
 └── README.md
 
-Requirements
+**Requirements**
 
 Python 3.9+
 
 Microphone access
 
-Python Dependencies
+**Python Dependencies**
 speechrecognition
 gtts
 wikipedia
@@ -67,7 +67,7 @@ psutil
 flask
 pyaudio
 
-Installation
+**Installation**
 
 Install required Python packages:
 
@@ -76,7 +76,7 @@ pip install -r requirements.txt
 
 (If PyAudio fails on Windows, install using a precompiled wheel.)
 
-Usage
+**Usage**
 
 Start the backend server:
 
@@ -91,7 +91,7 @@ python main.py
 Open the frontend interface:
 Open frontend/index.html in a web browser.
 
-Example Commands
+**Example Commands**
 
 "Myra play music"
 
@@ -105,7 +105,7 @@ Example Commands
 
 "Stop music"
 
-Design Principles
+**Design Principles**
 
 Separation of UI and logic
 
@@ -115,7 +115,7 @@ Minimal dependencies
 
 Readable and maintainable code
 
-Future Enhancements
+**Future Enhancements**
 
 Real-time audio visualization
 
@@ -127,7 +127,6 @@ Home automation integration
 
 Advanced command context handling
 
-Author
+**Author**
 
 Harsh Pratap Singh
-B.Tech Computer Science Engineering
