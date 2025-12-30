@@ -32,26 +32,6 @@ Clean HTML, CSS, and JavaScript
 
 Runs directly in the browser without frameworks
 
-**Project Structure**
-MYRA/
-│
-├── main.py                 # Main assistant loop
-├── server.py               # Backend to frontend communication
-│
-├── core/
-│   ├── speak.py            # Text-to-speech module
-│   ├── listen.py           # Speech recognition module
-│   ├── commands.py         # Command mapping
-│   ├── executor.py         # Action execution logic
-│   ├── trigger.py          # Wake-word detection
-│   └── music.py            # Music handling
-│
-├── frontend/
-│   ├── index.html          # Visual interface
-│   ├── style.css           # UI styling
-│   └── script.js           # Animation and interaction logic
-│
-└── README.md
 
 **Requirements**
 
