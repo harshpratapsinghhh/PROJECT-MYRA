@@ -1,20 +1,19 @@
 from gtts import gTTS
+from pydub import AudioSegment
+from pydub.playback import play
 import os
-import time
 
 def speak(text):
     try:
         filename = "response.mp3"
         if os.path.exists(filename):
-            try:
-                os.remove(filename)
-            except PermissionError:
-                print("[ERROR]: File in use, retrying...")
-                time.sleep(1)
-                return
+            os.remove(filename)
         tts = gTTS(text=text, lang='en', tld='co.uk')
         tts.save(filename)
-        os.system(f'start /min {filename}')
-        time.sleep(2)
+
+        # Pydub play
+        song = AudioSegment.from_file(filename)
+        play(song)
+        
     except Exception as e:
         print(f"[ERROR in speak()]: {e}")

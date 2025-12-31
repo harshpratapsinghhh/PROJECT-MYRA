@@ -8,14 +8,19 @@ from core.speak import speak
 from core.listen import listen
 
 def execute_command(command):
+    response = ""
+
     if "play music" in command:
         song_name = command.replace("play music", "").strip()
-        play_music(speak, song_name)
+        song, msg = play_music(song_name)
+        response = msg
 
     elif "stop music" in command or "pause music" in command:
-        stop_music(speak)
+        _, msg = stop_music()
+        response = msg
 
     elif "open" in command:
+        app_name = command.replace("open", "").strip()
         if "chrome" in command:
             speak("Opening Chrome")
             os.system("start chrome")
@@ -26,46 +31,50 @@ def execute_command(command):
             speak("Opening YouTube")
             webbrowser.open("https://www.youtube.com")
         else:
-            app = command.replace("open", "").strip()
-            speak(f"Opening {app}")
-            os.system(f"start {app}")
+            speak(f"Opening {app_name}")
+            os.system(f"start {app_name}")
+        response = f"Opened {app_name}"
 
     elif "search" in command:
         query = command.replace("search", "").strip()
         url = f"https://www.google.com/search?q={query}"
-        speak(f"Searching for {query}")
         webbrowser.open(url)
+        response = f"Searching for {query}"
 
     elif "wikipedia" in command or "who is" in command or "what is" in command:
         try:
             topic = command.replace("wikipedia", "").replace("who is", "").replace("what is", "").strip()
             result = wikipedia.summary(topic, sentences=2)
-            speak(f"According to Wikipedia, {result}")
+            response = f"According to Wikipedia, {result}"
         except Exception:
-            speak("Sorry, I couldn't find anything on Wikipedia.")
+            response = "Sorry, I couldn't find anything on Wikipedia."
 
     elif "battery" in command:
         battery = psutil.sensors_battery()
         if battery:
             percent = battery.percent
             plugged = "charging" if battery.power_plugged else "not charging"
-            speak(f"Battery is at {percent} percent and is {plugged}.")
+            response = f"Battery is at {percent} percent and is {plugged}."
         else:
-            speak("Battery status not available.")
+            response = "Battery status not available."
 
     elif "time" in command:
         now = datetime.datetime.now().strftime("%I:%M %p")
-        speak(f"Boss, the time is {now}")
+        response = f"The time is {now}"
 
     elif "date" in command:
         today = datetime.datetime.now().strftime("%A, %B %d, %Y")
-        speak(f"Today is {today}")
+        response = f"Today is {today}"
 
     else:
-        speak("Sorry boss, I didn’t get that. Should I search it online?")
-        response = listen()
-        if "yes" in response or "search" in response or "go for it" in response:
-            speak("Okay boss, searching it for you.")
+        response = "Sorry boss, I didn’t get that. Should I search it online?"
+        speak(response)
+        user_resp = listen()
+        if "yes" in user_resp or "search" in user_resp:
             webbrowser.open(f"https://www.google.com/search?q={command}")
+            response = f"Searching online for '{command}'"
         else:
-            speak("Okay boss, skipping search.")
+            response = "Skipping search."
+
+    speak(response)
+    return response
